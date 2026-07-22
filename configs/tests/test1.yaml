@@ -1,0 +1,17 @@
+domain:
+- 0.0
+- 1.0
+equation: Test1Equation
+model:
+  hidden_layers:
+  - 50
+  - 50
+  - 50
+  - 50
+name: test1
+plotting:
+  colormap: coolwarm
+  loss_color: blue
+training:
+  epochs: 5000
+  n_collocation: 100

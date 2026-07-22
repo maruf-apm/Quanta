@@ -1,0 +1,17 @@
+domain:
+- 0.0
+- 1.0
+equation: Test5Equation
+model:
+  hidden_layers:
+  - 60
+  - 60
+  - 60
+  - 60
+name: test5
+plotting:
+  colormap: plasma
+  loss_color: pink
+training:
+  epochs: 2000
+  n_collocation: 100

@@ -1,0 +1,17 @@
+domain:
+- 0.0
+- 1.0
+equation: Test4Equation
+model:
+  hidden_layers:
+  - 80
+  - 80
+  - 80
+  - 80
+name: test4
+plotting:
+  colormap: plasma
+  loss_color: purple
+training:
+  epochs: 5000
+  n_collocation: 100

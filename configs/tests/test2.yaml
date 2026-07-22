@@ -1,0 +1,17 @@
+domain:
+- 0.0
+- 1.0
+equation: Test2Equation
+model:
+  hidden_layers:
+  - 40
+  - 40
+  - 40
+  - 40
+name: test2
+plotting:
+  colormap: viridis
+  loss_color: red
+training:
+  epochs: 2000
+  n_collocation: 100

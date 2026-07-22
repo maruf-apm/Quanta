@@ -1,0 +1,10 @@
+model:
+  activation: tanh
+  hidden_layers:
+  - 50
+  - 50
+  - 50
+  - 50
+  input_dim: 1
+  output_dim: 1
+  type: FeedForwardNN

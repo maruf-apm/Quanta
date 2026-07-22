@@ -1,0 +1,5 @@
+training:
+  device: cpu
+  learning_rate: 0.0001
+  optimizer: Adam
+  seed: 42
