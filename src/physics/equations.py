@@ -19,7 +19,9 @@ class ODEEquation(ABC):
         pass
 
     @abstractmethod
-    def residual(self, n: torch.Tensor, m: torch.Tensor, dm_dn: torch.Tensor) -> torch.Tensor:
+    def residual(
+        self, n: torch.Tensor, m: torch.Tensor, dm_dn: torch.Tensor
+    ) -> torch.Tensor:
         """
         Compute the ODE residual: R = dm/dn - f(n, m).
         For a well-satisfied equation, R should be zero.
@@ -27,7 +29,9 @@ class ODEEquation(ABC):
         pass
 
     @abstractmethod
-    def exact(self, n: Union[torch.Tensor, np.ndarray]) -> Union[torch.Tensor, np.ndarray]:
+    def exact(
+        self, n: Union[torch.Tensor, np.ndarray]
+    ) -> Union[torch.Tensor, np.ndarray]:
         """Analytical exact solution m(n)."""
         pass
 
@@ -57,13 +61,22 @@ class Test1Equation(ODEEquation):
     name = "Test1Equation"
 
     def residual(self, n, m, dm_dn):
-        return dm_dn - (n ** 2 - 4.0 * m)
+        return dm_dn - (n**2 - 4.0 * m)
 
     def exact(self, n):
         def _fn(x):
-            return (31.0 / 32.0) * np.exp(-4.0 * x) + 0.25 * x ** 2 - 0.125 * x + 1.0 / 32.0
+            return (
+                (31.0 / 32.0) * np.exp(-4.0 * x) + 0.25 * x**2 - 0.125 * x + 1.0 / 32.0
+            )
+
         def _torch_fn(x):
-            return (31.0 / 32.0) * torch.exp(-4.0 * x) + 0.25 * x ** 2 - 0.125 * x + 1.0 / 32.0
+            return (
+                (31.0 / 32.0) * torch.exp(-4.0 * x)
+                + 0.25 * x**2
+                - 0.125 * x
+                + 1.0 / 32.0
+            )
+
         return self._torch_or_np(n, _torch_fn, _fn)
 
     def initial_condition(self):
@@ -87,8 +100,10 @@ class Test2Equation(ODEEquation):
     def exact(self, n):
         def _fn(x):
             return (1.0 / 3.0) * np.exp(-2.0 * x) + (2.0 / 3.0) * np.exp(-5.0 * x)
+
         def _torch_fn(x):
             return (1.0 / 3.0) * torch.exp(-2.0 * x) + (2.0 / 3.0) * torch.exp(-5.0 * x)
+
         return self._torch_or_np(n, _torch_fn, _fn)
 
     def initial_condition(self):
@@ -100,20 +115,22 @@ class Test2Equation(ODEEquation):
 
 
 # ---------------------------------------------------------------------------
-# Test 3: dm/dn = 1.5*m - n^3*m,  m(0) = 1
+# Test 3: dm/dn = m*n^3 - 1.5m,  m(0) = 1
 # Real: m(n) = exp(1.5*n - n^4/4)
 # ---------------------------------------------------------------------------
 class Test3Equation(ODEEquation):
     name = "Test3Equation"
 
     def residual(self, n, m, dm_dn):
-        return dm_dn - (1.5 * m - n ** 3 * m)
+        return dm_dn - (m * n**3 - 1.5 * m)
 
     def exact(self, n):
         def _fn(x):
-            return np.exp(1.5 * x - x ** 4 / 4.0)
+            return np.exp(-1.5 * x + x**4 / 4.0)
+
         def _torch_fn(x):
-            return torch.exp(1.5 * x - x ** 4 / 4.0)
+            return torch.exp(-1.5 * x + x**4 / 4.0)
+
         return self._torch_or_np(n, _torch_fn, _fn)
 
     def initial_condition(self):
@@ -132,13 +149,15 @@ class Test4Equation(ODEEquation):
     name = "Test4Equation"
 
     def residual(self, n, m, dm_dn):
-        return dm_dn - (-2.0 * n * m / (1.0 + n ** 2))
+        return dm_dn - (-2.0 * n * m / (1.0 + n**2))
 
     def exact(self, n):
         def _fn(x):
-            return 1.0 / (1.0 + x ** 2)
+            return 1.0 / (1.0 + x**2)
+
         def _torch_fn(x):
-            return 1.0 / (1.0 + x ** 2)
+            return 1.0 / (1.0 + x**2)
+
         return self._torch_or_np(n, _torch_fn, _fn)
 
     def initial_condition(self):
@@ -162,8 +181,10 @@ class Test5Equation(ODEEquation):
     def exact(self, n):
         def _fn(x):
             return 3.0 + np.exp(-0.5 * x)
+
         def _torch_fn(x):
             return 3.0 + torch.exp(-0.5 * x)
+
         return self._torch_or_np(n, _torch_fn, _fn)
 
     def initial_condition(self):
@@ -191,14 +212,22 @@ class Test6Equation(ODEEquation):
         def _ode(t, y):
             return -2.2067e-12 * (y[0] ** 4 - 81.0e8)
 
-        sol = solve_ivp(_ode, [0.0, 500.0], [1000.0], t_eval=self._n_fine, method="RK45", rtol=1e-10, atol=1e-12)
+        sol = solve_ivp(
+            _ode,
+            [0.0, 500.0],
+            [1000.0],
+            t_eval=self._n_fine,
+            method="RK45",
+            rtol=1e-10,
+            atol=1e-12,
+        )
         self._m_fine = sol.y[0]
         self._interp = interp1d(
             self._n_fine, self._m_fine, kind="cubic", fill_value="extrapolate"
         )
 
     def residual(self, n, m, dm_dn):
-        return dm_dn - (-2.2067e-12 * (m ** 4 - 81.0e8))
+        return dm_dn - (-2.2067e-12 * (m**4 - 81.0e8))
 
     def exact(self, n):
         if isinstance(n, torch.Tensor):

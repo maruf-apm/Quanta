@@ -3,25 +3,27 @@
 Run both ANN and PINN on a test case and generate comparison figures/tables.
 Replicates the side-by-side analysis from Audu et al. (2026).
 """
+
 import argparse
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-import torch
 import numpy as np
-from utils.config import load_config
-from utils.logger import setup_logger
-from physics.equations import EQUATION_REGISTRY
-from models.networks import FeedForwardNN
-from models.pinn_solver import PINNSolver
-from models.ann_solver import ANNSolver
+import torch
+
 from data.dataset import ODEDataGenerator
-from training.trainer import Trainer
+from evaluation.metrics import Metrics
 from evaluation.plotter import ODEPlotter
 from evaluation.table_exporter import TableExporter
-from evaluation.metrics import Metrics
+from models.ann_solver import ANNSolver
+from models.networks import FeedForwardNN
+from models.pinn_solver import PINNSolver
+from physics.equations import EQUATION_REGISTRY
+from training.trainer import Trainer
+from utils.config import load_config
+from utils.logger import setup_logger
 
 
 def train_model(model, model_type, data_gen, cfg, device, out_dir):
@@ -74,15 +76,17 @@ def main():
     net_pinn = FeedForwardNN(hidden_layers=hidden, activation=act)
     model_pinn = PINNSolver(net_pinn, equation)
     logger.info("Training PINN...")
-    trainer_pinn, hist_pinn = train_model(model_pinn, "pinn", data_gen, cfg, args.device,
-                                          os.path.join(out_dir, "pinn"))
+    trainer_pinn, hist_pinn = train_model(
+        model_pinn, "pinn", data_gen, cfg, args.device, os.path.join(out_dir, "pinn")
+    )
 
     # Train ANN
     net_ann = FeedForwardNN(hidden_layers=hidden, activation=act)
     model_ann = ANNSolver(net_ann)
     logger.info("Training ANN...")
-    trainer_ann, hist_ann = train_model(model_ann, "ann", data_gen, cfg, args.device,
-                                        os.path.join(out_dir, "ann"))
+    trainer_ann, hist_ann = train_model(
+        model_ann, "ann", data_gen, cfg, args.device, os.path.join(out_dir, "ann")
+    )
 
     # Evaluation grid
     n_test, m_real = data_gen.generate_test_grid(n_points=args.n_eval)
@@ -108,18 +112,33 @@ def main():
 
     # Plots
     plotter = ODEPlotter(output_dir=os.path.join(out_dir, "figures"))
-    plotter.plot_training_loss(hist_pinn, title=f"PINN Training Loss - {test_name}",
-                               color=cfg["plotting"].get("loss_color", "blue"),
-                               filename="pinn_training_loss.png")
-    plotter.plot_training_loss(hist_ann, title=f"ANN Training Loss - {test_name}",
-                               color="red", filename="ann_training_loss.png")
-    plotter.plot_heatmaps(n_test, m_real, m_pinn, m_ann, test_name,
-                          cmap=cfg["plotting"].get("colormap", "coolwarm"))
+    plotter.plot_training_loss(
+        hist_pinn,
+        title=f"PINN Training Loss - {test_name}",
+        color=cfg["plotting"].get("loss_color", "blue"),
+        filename="pinn_training_loss.png",
+    )
+    plotter.plot_training_loss(
+        hist_ann,
+        title=f"ANN Training Loss - {test_name}",
+        color="red",
+        filename="ann_training_loss.png",
+    )
+    plotter.plot_heatmaps(
+        n_test,
+        m_real,
+        m_pinn,
+        m_ann,
+        test_name,
+        cmap=cfg["plotting"].get("colormap", "coolwarm"),
+    )
 
     # Collocation points figure (once per test)
     n_col = data_gen.generate_collocation_points().numpy()
     n_ic, _ = data_gen.generate_initial_condition()
-    plotter.plot_collocation_points(n_col, n_ic.numpy(), filename=f"{test_name}_collocation.png")
+    plotter.plot_collocation_points(
+        n_col, n_ic.numpy(), filename=f"{test_name}_collocation.png"
+    )
 
     # Tables
     exporter = TableExporter(output_dir=os.path.join(out_dir, "tables"))

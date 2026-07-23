@@ -1,25 +1,13 @@
-"""
-Unified training engine for both ANN and PINN models.
-"""
+# src/training/trainer.py
 import os
 import torch
 from torch.optim import Adam
+from torch.optim.lr_scheduler import ReduceLROnPlateau  # <-- ADD THIS IMPORT
 from tqdm import tqdm
 from typing import Dict, Any
 
 
 class Trainer:
-    """
-    Generic trainer that adapts to ANN or PINN based on model type.
-
-    Parameters
-    ----------
-    model : BaseODESolver
-        The solver instance (ANN or PINN).
-    config : dict
-        Training hyperparameters.
-    """
-
     def __init__(self, model, config: Dict[str, Any]):
         self.model = model
         self.config = config
@@ -34,16 +22,18 @@ class Trainer:
 
         self.history = []
 
-    def train(self, data_generator, model_type: str = "pinn"):
-        """
-        Execute training loop.
+        # ============================================
+        # ADD SCHEDULER HERE (inside __init__)
+        # ============================================
+        scheduler_type = config.get("scheduler", "plateau")
+        if scheduler_type == "plateau":
+            self.scheduler = ReduceLROnPlateau(
+                self.optimizer, mode="min", factor=0.5, patience=200, threshold=1e-4
+            )
+        else:
+            self.scheduler = None
 
-        Parameters
-        ----------
-        data_generator : ODEDataGenerator
-        model_type : str
-            'pinn' or 'ann'.
-        """
+    def train(self, data_generator, model_type: str = "pinn"):
         self.model.train()
 
         # Prepare data
@@ -66,7 +56,17 @@ class Trainer:
 
             loss = losses["total"]
             loss.backward()
+
+            # Optional: gradient clipping (also helps stability)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+
             self.optimizer.step()
+
+            # ============================================
+            # ADD SCHEDULER STEP HERE (inside train loop)
+            # ============================================
+            if self.scheduler is not None:
+                self.scheduler.step(loss.item())
 
             # Record history
             record = {"epoch": epoch}
@@ -75,7 +75,9 @@ class Trainer:
             self.history.append(record)
 
             if epoch % 100 == 0:
-                pbar.set_postfix({k: f"{v:.2e}" for k, v in record.items() if k != "epoch"})
+                pbar.set_postfix(
+                    {k: f"{v:.2e}" for k, v in record.items() if k != "epoch"}
+                )
 
         return self.history
 
