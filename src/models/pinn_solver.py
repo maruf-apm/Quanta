@@ -40,7 +40,7 @@ class PINNSolver(BaseODESolver):
     def compute_derivative(self, n: torch.Tensor):
         """Compute m and dm/dn via autograd."""
         n = n.requires_grad_(True)
-        m = self.forward(n)  # <-- This calls the modified forward above
+        m = self.forward(n)
         dm_dn = torch.autograd.grad(
             outputs=m,
             inputs=n,

@@ -1,8 +1,7 @@
-# src/training/trainer.py
 import os
 import torch
 from torch.optim import Adam
-from torch.optim.lr_scheduler import ReduceLROnPlateau  # <-- ADD THIS IMPORT
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tqdm import tqdm
 from typing import Dict, Any
 
